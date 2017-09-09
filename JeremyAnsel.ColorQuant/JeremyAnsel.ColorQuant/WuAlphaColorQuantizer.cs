@@ -9,6 +9,8 @@ namespace JeremyAnsel.ColorQuant
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
+    using System.Drawing;
+    using System.Drawing.Imaging;
 
     /// <summary>
     /// A Wu's color quantizer with alpha channel.
@@ -127,6 +129,102 @@ namespace JeremyAnsel.ColorQuant
             this.BuildCube(out cube, ref colorCount);
 
             return this.GenerateResult(image, colorCount, cube);
+        }
+
+        /// <summary>
+        /// Quantizes an image.
+        /// </summary>
+        /// <param name="image">The image (ARGB).</param>
+        /// <param name="colorCount">The color count.</param>
+        /// <param name="width">Width of image</param>
+        /// <param name="height">Height of image</param>
+        /// <param name="destPixels">Indexed pixelData will be written there</param>
+        /// <returns>Palette with ARGB colors</returns>
+        [CLSCompliantAttribute(false)]
+        public unsafe uint[] Quantize(uint* image, int colorCount, int width, int height, byte* destPixels)
+        {
+            if (image == null)
+            {
+                throw new ArgumentNullException("image");
+            }
+
+            if (destPixels == null)
+            {
+                throw new ArgumentNullException("destPixels");
+            }
+
+            if (colorCount < 1 || colorCount > 256)
+            {
+                throw new ArgumentOutOfRangeException("colorCount");
+            }
+
+            this.Clear();
+
+            this.Build3DHistogram(image, width, height);
+            this.Get3DMoments();
+
+            Box[] cube;
+            this.BuildCube(out cube, ref colorCount);
+
+            return this.GenerateResult(image, colorCount, cube, width, height, destPixels);
+        }
+
+        /// <summary>
+        /// Quantizes an image.
+        /// </summary>
+        /// <param name="image">The image (ARGB).</param>
+        /// <param name="colorCount">The color count.</param>
+        /// <returns>Bitmap with indexed colors</returns>
+        [CLSCompliantAttribute(false)]
+        [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "Reviewed")]
+        public unsafe Bitmap Quantize(Bitmap image, int colorCount)
+        {
+            if (image == null)
+            {
+                throw new ArgumentNullException("image");
+            }
+            
+            if (colorCount < 1 || colorCount > 256)
+            {
+                throw new ArgumentOutOfRangeException("colorCount");
+            }
+
+            Bitmap bmp = new Bitmap(image.Width, image.Height, PixelFormat.Format8bppIndexed);
+
+            BitmapData imgdata = image.LockBits(
+                Rectangle.FromLTRB(0, 0, image.Width, image.Height), 
+                ImageLockMode.ReadOnly, 
+                image.PixelFormat);
+
+            BitmapData bmpdata = bmp.LockBits(
+                Rectangle.FromLTRB(0, 0, bmp.Width, bmp.Height), 
+                ImageLockMode.WriteOnly, 
+                bmp.PixelFormat);
+
+            uint[] res = this.Quantize(
+               (uint*)imgdata.Scan0.ToPointer(),
+               256, 
+               image.Width, 
+               image.Height,
+               (byte*)bmpdata.Scan0.ToPointer());
+
+            ColorPalette pal = bmp.Palette;
+            for (int i = 0; i < res.Length; i++)
+            {
+                pal.Entries[i] = Color.FromArgb((int)res[i]);
+            }
+
+            for (int i = res.Length; i < 256; i++)
+            {
+                pal.Entries[i] = Color.FromArgb(0);
+            }
+
+            bmp.Palette = pal;
+
+            image.UnlockBits(imgdata);
+            bmp.UnlockBits(bmpdata);
+
+            return bmp;
         }
 
         /// <summary>
@@ -330,6 +428,40 @@ namespace JeremyAnsel.ColorQuant
                 int ina = a >> (8 - WuAlphaColorQuantizer.IndexAlphaBits);
 
                 int ind = WuAlphaColorQuantizer.GetIndex(inr + 1, ing + 1, inb + 1, ina + 1);
+
+                this.vwt[ind]++;
+                this.vmr[ind] += r;
+                this.vmg[ind] += g;
+                this.vmb[ind] += b;
+                this.vma[ind] += a;
+                this.m2[ind] += (r * r) + (g * g) + (b * b) + (a * a);
+            }
+        }
+
+        /// <summary>
+        /// Builds a 3-D color histogram of <c>counts, r/g/b, c^2</c>.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="width">Width of image</param>
+        /// <param name="height">Height of image</param>
+        private unsafe void Build3DHistogram(uint* image, int width, int height)
+        {
+            int pixels = width * height;
+
+            for (int i = 0; i < pixels; i++)
+            {
+                uint pix = image[i];
+                uint a = (pix & 0xFF000000) >> 24;
+                uint r = (pix & 0x00FF0000) >> 16;
+                uint g = (pix & 0x0000FF00) >> 8;
+                uint b = pix & 0x000000FF;
+
+                uint inr = r >> (8 - WuAlphaColorQuantizer.IndexBits);
+                uint ing = g >> (8 - WuAlphaColorQuantizer.IndexBits);
+                uint inb = b >> (8 - WuAlphaColorQuantizer.IndexBits);
+                uint ina = a >> (8 - WuAlphaColorQuantizer.IndexAlphaBits);
+
+                int ind = WuAlphaColorQuantizer.GetIndex((int)inr + 1, (int)ing + 1, (int)inb + 1, (int)ina + 1);
 
                 this.vwt[ind]++;
                 this.vmr[ind] += r;
@@ -744,6 +876,73 @@ namespace JeremyAnsel.ColorQuant
             }
 
             return quantizedImage;
+        }
+
+        /// <summary>
+        /// Generates the quantized result.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="colorCount">The color count.</param>
+        /// <param name="cube">The cube.</param>
+        /// <param name="width">Width of image</param>
+        /// <param name="height">Height of image</param>
+        /// <param name="destPixels">Pixel values are written here. Must provide width*height memory. Warning: Rows are padded to multiple of 4</param>
+        /// <returns>Receives colors</returns>
+        private unsafe uint[] GenerateResult(uint* image, int colorCount, Box[] cube, int width, int height, byte* destPixels)
+        {
+            uint[] palette = new uint[colorCount];
+
+            // rows must be a multiple of 4, hence padding up to 3 bytes for 8-bit indexed pixels
+            int widthMod4 = width % 4;
+            int widthZeros = widthMod4 != 0 ? 4 - widthMod4 : 0;
+
+            for (int k = 0; k < colorCount; k++)
+            {
+                this.Mark(cube[k], (byte)k);
+
+                double weight = WuAlphaColorQuantizer.Volume(cube[k], this.vwt);
+
+                if (weight != 0)
+                {
+                    uint a = (byte)(WuAlphaColorQuantizer.Volume(cube[k], this.vma) / weight);
+                    uint r = (byte)(WuAlphaColorQuantizer.Volume(cube[k], this.vmr) / weight);
+                    uint g = (byte)(WuAlphaColorQuantizer.Volume(cube[k], this.vmg) / weight);
+                    uint b = (byte)(WuAlphaColorQuantizer.Volume(cube[k], this.vmb) / weight);
+
+                    palette[k] = (a << 24) | (r << 16) | (g << 8) | b;
+                }
+                else
+                {
+                    palette[k] = 0xFF000000;
+                }
+            }
+
+            for (int ri = 0; ri < height; ri++)
+            {
+                for (int ci = 0; ci < width; ci++)
+                {
+                    uint pix = image[0];
+
+                    uint a = ((pix & 0xFF000000) >> 24) >> (8 - WuAlphaColorQuantizer.IndexAlphaBits);
+                    uint r = ((pix & 0x00FF0000) >> 16) >> (8 - WuAlphaColorQuantizer.IndexBits);
+                    uint g = ((pix & 0x0000FF00) >> 8) >> (8 - WuAlphaColorQuantizer.IndexBits);
+                    uint b = (pix & 0x000000FF) >> (8 - WuAlphaColorQuantizer.IndexBits);
+
+                    int ind = WuAlphaColorQuantizer.GetIndex((int)r + 1, (int)g + 1, (int)b + 1, (int)a + 1);
+
+                    destPixels[0] = this.tag[ind];
+                    destPixels++;
+                    image++;
+                }
+
+                for (int c = 0; c < widthZeros; c++)
+                {
+                    destPixels[0] = 0x00;
+                    destPixels++;
+                }
+            }
+
+            return palette;
         }
     }
 }
