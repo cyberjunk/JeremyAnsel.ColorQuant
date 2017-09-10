@@ -139,9 +139,10 @@ namespace JeremyAnsel.ColorQuant
         /// <param name="width">Width of image</param>
         /// <param name="height">Height of image</param>
         /// <param name="destPixels">Indexed pixelData will be written there</param>
+        /// <param name="padMultiple4">True to pad rows to multiple of 4</param>
         /// <returns>Palette with ARGB colors</returns>
         [CLSCompliantAttribute(false)]
-        public unsafe uint[] Quantize(uint* image, int colorCount, int width, int height, byte* destPixels)
+        public unsafe uint[] Quantize(uint* image, int colorCount, int width, int height, byte* destPixels, bool padMultiple4)
         {
             if (image == null)
             {
@@ -166,7 +167,7 @@ namespace JeremyAnsel.ColorQuant
             Box[] cube;
             this.BuildCube(out cube, ref colorCount);
 
-            return this.GenerateResult(image, colorCount, cube, width, height, destPixels);
+            return this.GenerateResult(image, colorCount, cube, width, height, destPixels, padMultiple4);
         }
 
         /// <summary>
@@ -203,10 +204,11 @@ namespace JeremyAnsel.ColorQuant
 
             uint[] res = this.Quantize(
                (uint*)imgdata.Scan0.ToPointer(),
-               256, 
+               colorCount, 
                image.Width, 
                image.Height,
-               (byte*)bmpdata.Scan0.ToPointer());
+               (byte*)bmpdata.Scan0.ToPointer(),
+               true);
 
             ColorPalette pal = bmp.Palette;
             for (int i = 0; i < res.Length; i++)
@@ -225,6 +227,50 @@ namespace JeremyAnsel.ColorQuant
             bmp.UnlockBits(bmpdata);
 
             return bmp;
+        }
+
+        /// <summary>
+        /// Quantizes an image.
+        /// </summary>
+        /// <param name="image">The image (ARGB).</param>
+        /// <param name="colorCount">The color count.</param>
+        /// <param name="destPixels">Indexed pixelData will be written there</param>
+        /// <param name="padMultiple4">True to pad rows to multiple of 4</param>
+        /// <returns>Bitmap with indexed colors</returns>
+        [CLSCompliantAttribute(false)]
+        public unsafe uint[] Quantize(Bitmap image, int colorCount, byte* destPixels, bool padMultiple4)
+        {
+            if (image == null)
+            {
+                throw new ArgumentNullException("image");
+            }
+
+            if (destPixels == null)
+            {
+                throw new ArgumentNullException("destPixels");
+            }
+
+            if (colorCount < 1 || colorCount > 256)
+            {
+                throw new ArgumentOutOfRangeException("colorCount");
+            }
+            
+            BitmapData imgdata = image.LockBits(
+                Rectangle.FromLTRB(0, 0, image.Width, image.Height),
+                ImageLockMode.ReadOnly,
+                image.PixelFormat);
+            
+            uint[] res = this.Quantize(
+               (uint*)imgdata.Scan0.ToPointer(),
+               colorCount,
+               image.Width,
+               image.Height,
+               destPixels,
+               padMultiple4);
+            
+            image.UnlockBits(imgdata);
+
+            return res;
         }
 
         /// <summary>
@@ -886,9 +932,10 @@ namespace JeremyAnsel.ColorQuant
         /// <param name="cube">The cube.</param>
         /// <param name="width">Width of image</param>
         /// <param name="height">Height of image</param>
-        /// <param name="destPixels">Pixel values are written here. Must provide width*height memory. Warning: Rows are padded to multiple of 4</param>
+        /// <param name="destPixels">Pixel values are written here. Must provide width*height memory.</param>
+        /// <param name="padMultiple4">True to write zero padding to make row bytes multiple of 4</param>
         /// <returns>Receives colors</returns>
-        private unsafe uint[] GenerateResult(uint* image, int colorCount, Box[] cube, int width, int height, byte* destPixels)
+        private unsafe uint[] GenerateResult(uint* image, int colorCount, Box[] cube, int width, int height, byte* destPixels, bool padMultiple4)
         {
             uint[] palette = new uint[colorCount];
 
@@ -935,10 +982,14 @@ namespace JeremyAnsel.ColorQuant
                     image++;
                 }
 
-                for (int c = 0; c < widthZeros; c++)
-                {
-                    destPixels[0] = 0x00;
-                    destPixels++;
+                // write additional zero bytes if requested
+                if (padMultiple4)
+                { 
+                    for (int c = 0; c < widthZeros; c++)
+                    {
+                        destPixels[0] = 0x00;
+                        destPixels++;
+                    }
                 }
             }
 
