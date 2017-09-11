@@ -53,6 +53,11 @@ namespace JeremyAnsel.ColorQuant
         private const int IndexAlphaCount = (1 << WuAlphaColorQuantizer.IndexAlphaBits) + 1;
 
         /// <summary>
+        /// IndexCount * IndexAlphaCount
+        /// </summary>
+        private const int WorkArraySize = WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount;
+
+        /// <summary>
         /// The table length.
         /// </summary>
         private const int TableLength = WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount;
@@ -91,6 +96,68 @@ namespace JeremyAnsel.ColorQuant
         /// Color space tag.
         /// </summary>
         private readonly byte[] tag = new byte[WuAlphaColorQuantizer.TableLength];
+
+        #region Temporary Arrays for GetMoments3D
+        /// <summary>
+        /// Temporary Array Data used in Get3DMoments()
+        /// </summary>
+        private readonly long[] volume = new long[WuAlphaColorQuantizer.WorkArraySize];
+
+        /// <summary>
+        /// Temporary Array Data used in Get3DMoments()
+        /// </summary>
+        private readonly long[] volumeR = new long[WuAlphaColorQuantizer.WorkArraySize];
+
+        /// <summary>
+        /// Temporary Array Data used in Get3DMoments()
+        /// </summary>
+        private readonly long[] volumeG = new long[WuAlphaColorQuantizer.WorkArraySize];
+
+        /// <summary>
+        /// Temporary Array Data used in Get3DMoments()
+        /// </summary>
+        private readonly long[] volumeB = new long[WuAlphaColorQuantizer.WorkArraySize];
+
+        /// <summary>
+        /// Temporary Array Data used in Get3DMoments()
+        /// </summary>
+        private readonly long[] volumeA = new long[WuAlphaColorQuantizer.WorkArraySize];
+
+        /// <summary>
+        /// Temporary Array Data used in Get3DMoments()
+        /// </summary>
+        private readonly double[] volume2 = new double[WuAlphaColorQuantizer.WorkArraySize];
+
+        /// <summary>
+        /// Temporary Array Data used in Get3DMoments()
+        /// </summary>
+        private readonly long[] area = new long[WuAlphaColorQuantizer.IndexAlphaCount];
+
+        /// <summary>
+        /// Temporary Array Data used in Get3DMoments()
+        /// </summary>
+        private readonly long[] areaR = new long[WuAlphaColorQuantizer.IndexAlphaCount];
+
+        /// <summary>
+        /// Temporary Array Data used in Get3DMoments()
+        /// </summary>
+        private readonly long[] areaG = new long[WuAlphaColorQuantizer.IndexAlphaCount];
+
+        /// <summary>
+        /// Temporary Array Data used in Get3DMoments()
+        /// </summary>
+        private readonly long[] areaB = new long[WuAlphaColorQuantizer.IndexAlphaCount];
+
+        /// <summary>
+        /// Temporary Array Data used in Get3DMoments()
+        /// </summary>
+        private readonly long[] areaA = new long[WuAlphaColorQuantizer.IndexAlphaCount];
+
+        /// <summary>
+        /// Temporary Array Data used in Get3DMoments()
+        /// </summary>
+        private readonly double[] area2 = new double[WuAlphaColorQuantizer.IndexAlphaCount];
+        #endregion
 
         /// <summary>
         /// Quantizes an image.
@@ -528,37 +595,23 @@ namespace JeremyAnsel.ColorQuant
         /// </summary>
         private void Get3DMoments()
         {
-            long[] volume = new long[WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount];
-            long[] volumeR = new long[WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount];
-            long[] volumeG = new long[WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount];
-            long[] volumeB = new long[WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount];
-            long[] volumeA = new long[WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount];
-            double[] volume2 = new double[WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount];
-
-            long[] area = new long[WuAlphaColorQuantizer.IndexAlphaCount];
-            long[] areaR = new long[WuAlphaColorQuantizer.IndexAlphaCount];
-            long[] areaG = new long[WuAlphaColorQuantizer.IndexAlphaCount];
-            long[] areaB = new long[WuAlphaColorQuantizer.IndexAlphaCount];
-            long[] areaA = new long[WuAlphaColorQuantizer.IndexAlphaCount];
-            double[] area2 = new double[WuAlphaColorQuantizer.IndexAlphaCount];
-
             for (int r = 1; r < WuAlphaColorQuantizer.IndexCount; r++)
             {
-                Array.Clear(volume, 0, WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount);
-                Array.Clear(volumeR, 0, WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount);
-                Array.Clear(volumeG, 0, WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount);
-                Array.Clear(volumeB, 0, WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount);
-                Array.Clear(volumeA, 0, WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount);
-                Array.Clear(volume2, 0, WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount);
+                Array.Clear(this.volume, 0, WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount);
+                Array.Clear(this.volumeR, 0, WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount);
+                Array.Clear(this.volumeG, 0, WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount);
+                Array.Clear(this.volumeB, 0, WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount);
+                Array.Clear(this.volumeA, 0, WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount);
+                Array.Clear(this.volume2, 0, WuAlphaColorQuantizer.IndexCount * WuAlphaColorQuantizer.IndexAlphaCount);
 
                 for (int g = 1; g < WuAlphaColorQuantizer.IndexCount; g++)
                 {
-                    Array.Clear(area, 0, WuAlphaColorQuantizer.IndexAlphaCount);
-                    Array.Clear(areaR, 0, WuAlphaColorQuantizer.IndexAlphaCount);
-                    Array.Clear(areaG, 0, WuAlphaColorQuantizer.IndexAlphaCount);
-                    Array.Clear(areaB, 0, WuAlphaColorQuantizer.IndexAlphaCount);
-                    Array.Clear(areaA, 0, WuAlphaColorQuantizer.IndexAlphaCount);
-                    Array.Clear(area2, 0, WuAlphaColorQuantizer.IndexAlphaCount);
+                    Array.Clear(this.area, 0, WuAlphaColorQuantizer.IndexAlphaCount);
+                    Array.Clear(this.areaR, 0, WuAlphaColorQuantizer.IndexAlphaCount);
+                    Array.Clear(this.areaG, 0, WuAlphaColorQuantizer.IndexAlphaCount);
+                    Array.Clear(this.areaB, 0, WuAlphaColorQuantizer.IndexAlphaCount);
+                    Array.Clear(this.areaA, 0, WuAlphaColorQuantizer.IndexAlphaCount);
+                    Array.Clear(this.area2, 0, WuAlphaColorQuantizer.IndexAlphaCount);
 
                     for (int b = 1; b < WuAlphaColorQuantizer.IndexCount; b++)
                     {
@@ -580,30 +633,30 @@ namespace JeremyAnsel.ColorQuant
                             lineA += this.vma[ind1];
                             line2 += this.m2[ind1];
 
-                            area[a] += line;
-                            areaR[a] += lineR;
-                            areaG[a] += lineG;
-                            areaB[a] += lineB;
-                            areaA[a] += lineA;
-                            area2[a] += line2;
+                            this.area[a] += line;
+                            this.areaR[a] += lineR;
+                            this.areaG[a] += lineG;
+                            this.areaB[a] += lineB;
+                            this.areaA[a] += lineA;
+                            this.area2[a] += line2;
 
                             int inv = (b * WuAlphaColorQuantizer.IndexAlphaCount) + a;
 
-                            volume[inv] += area[a];
-                            volumeR[inv] += areaR[a];
-                            volumeG[inv] += areaG[a];
-                            volumeB[inv] += areaB[a];
-                            volumeA[inv] += areaA[a];
-                            volume2[inv] += area2[a];
+                            this.volume[inv] += this.area[a];
+                            this.volumeR[inv] += this.areaR[a];
+                            this.volumeG[inv] += this.areaG[a];
+                            this.volumeB[inv] += this.areaB[a];
+                            this.volumeA[inv] += this.areaA[a];
+                            this.volume2[inv] += this.area2[a];
 
                             int ind2 = ind1 - WuAlphaColorQuantizer.GetIndex(1, 0, 0, 0);
 
-                            this.vwt[ind1] = this.vwt[ind2] + volume[inv];
-                            this.vmr[ind1] = this.vmr[ind2] + volumeR[inv];
-                            this.vmg[ind1] = this.vmg[ind2] + volumeG[inv];
-                            this.vmb[ind1] = this.vmb[ind2] + volumeB[inv];
-                            this.vma[ind1] = this.vma[ind2] + volumeA[inv];
-                            this.m2[ind1] = this.m2[ind2] + volume2[inv];
+                            this.vwt[ind1] = this.vwt[ind2] + this.volume[inv];
+                            this.vmr[ind1] = this.vmr[ind2] + this.volumeR[inv];
+                            this.vmg[ind1] = this.vmg[ind2] + this.volumeG[inv];
+                            this.vmb[ind1] = this.vmb[ind2] + this.volumeB[inv];
+                            this.vma[ind1] = this.vma[ind2] + this.volumeA[inv];
+                            this.m2[ind1] = this.m2[ind2] + this.volume2[inv];
                         }
                     }
                 }
