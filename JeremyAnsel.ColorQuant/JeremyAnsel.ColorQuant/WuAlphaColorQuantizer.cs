@@ -238,7 +238,7 @@ namespace JeremyAnsel.ColorQuant
         /// <param name="padMultiple4">True to pad rows to multiple of 4</param>
         /// <returns>Bitmap with indexed colors</returns>
         [CLSCompliantAttribute(false)]
-        public unsafe uint[] Quantize(Bitmap image, int colorCount, byte* destPixels, bool padMultiple4)
+        public unsafe uint[] Quantize(Bitmap image, int colorCount, byte[] destPixels, bool padMultiple4)
         {
             if (image == null)
             {
@@ -259,14 +259,18 @@ namespace JeremyAnsel.ColorQuant
                 Rectangle.FromLTRB(0, 0, image.Width, image.Height),
                 ImageLockMode.ReadOnly,
                 image.PixelFormat);
-            
-            uint[] res = this.Quantize(
-               (uint*)imgdata.Scan0.ToPointer(),
-               colorCount,
-               image.Width,
-               image.Height,
-               destPixels,
-               padMultiple4);
+
+            uint[] res;
+            fixed (byte* p = destPixels)
+            {
+                res = this.Quantize(
+                   (uint*)imgdata.Scan0.ToPointer(),
+                   colorCount,
+                   image.Width,
+                   image.Height,
+                   p,
+                   padMultiple4);
+            }
             
             image.UnlockBits(imgdata);
 
