@@ -11,6 +11,7 @@ namespace JeremyAnsel.ColorQuant
     using System.Diagnostics.CodeAnalysis;
     using System.Drawing;
     using System.Drawing.Imaging;
+    using System.Runtime.CompilerServices;
 
     /// <summary>
     /// A Wu's color quantizer with alpha channel.
@@ -32,6 +33,11 @@ namespace JeremyAnsel.ColorQuant
     [SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", MessageId = "Wu", Justification = "Reviewed")]
     public sealed class WuAlphaColorQuantizer : IColorQuantizer
     {
+        /// <summary>
+        /// Maximum supported colors
+        /// </summary>
+        private const int MaxColors = 256;
+
         /// <summary>
         /// The index bits.
         /// </summary>
@@ -166,7 +172,7 @@ namespace JeremyAnsel.ColorQuant
         /// <returns>The result.</returns>
         public ColorQuantizerResult Quantize(byte[] image)
         {
-            return this.Quantize(image, 256);
+            return this.Quantize(image, WuAlphaColorQuantizer.MaxColors);
         }
 
         /// <summary>
@@ -182,7 +188,7 @@ namespace JeremyAnsel.ColorQuant
                 throw new ArgumentNullException("image");
             }
 
-            if (colorCount < 1 || colorCount > 256)
+            if (colorCount < 1 || colorCount > WuAlphaColorQuantizer.MaxColors)
             {
                 throw new ArgumentOutOfRangeException("colorCount");
             }
@@ -221,7 +227,7 @@ namespace JeremyAnsel.ColorQuant
                 throw new ArgumentNullException("destPixels");
             }
 
-            if (colorCount < 1 || colorCount > 256)
+            if (colorCount < 1 || colorCount > WuAlphaColorQuantizer.MaxColors)
             {
                 throw new ArgumentOutOfRangeException("colorCount");
             }
@@ -252,7 +258,7 @@ namespace JeremyAnsel.ColorQuant
                 throw new ArgumentNullException("image");
             }
             
-            if (colorCount < 1 || colorCount > 256)
+            if (colorCount < 1 || colorCount > WuAlphaColorQuantizer.MaxColors)
             {
                 throw new ArgumentOutOfRangeException("colorCount");
             }
@@ -352,6 +358,7 @@ namespace JeremyAnsel.ColorQuant
         /// <param name="b">The blue value.</param>
         /// <param name="a">The alpha value.</param>
         /// <returns>The index.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int GetIndex(int r, int g, int b, int a)
         {
             return (r << ((WuAlphaColorQuantizer.IndexBits * 2) + WuAlphaColorQuantizer.IndexAlphaBits))
