@@ -56,5 +56,21 @@ namespace JeremyAnsel.ColorQuant
         /// Gets or sets the volume.
         /// </summary>
         public int Volume { get; set; }
+
+        /// <summary>
+        /// Resets all values to zero.
+        /// </summary>
+        public void Clear()
+        {
+            this.R0 = 0;
+            this.R1 = 0;
+            this.G0 = 0;
+            this.G0 = 0;
+            this.B0 = 0;
+            this.B0 = 0;
+            this.A0 = 0;
+            this.A1 = 0;
+            this.Volume = 0;
+        }
     }
 }
