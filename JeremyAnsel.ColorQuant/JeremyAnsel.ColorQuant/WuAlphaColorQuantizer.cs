@@ -71,32 +71,32 @@ namespace JeremyAnsel.ColorQuant
         /// <summary>
         /// Moment of <c>P(c)</c>.
         /// </summary>
-        private readonly long[] vwt = new long[WuAlphaColorQuantizer.TableLength];
+        private readonly int[] vwt = new int[WuAlphaColorQuantizer.TableLength];
 
         /// <summary>
         /// Moment of <c>r*P(c)</c>.
         /// </summary>
-        private readonly long[] vmr = new long[WuAlphaColorQuantizer.TableLength];
+        private readonly int[] vmr = new int[WuAlphaColorQuantizer.TableLength];
 
         /// <summary>
         /// Moment of <c>g*P(c)</c>.
         /// </summary>
-        private readonly long[] vmg = new long[WuAlphaColorQuantizer.TableLength];
+        private readonly int[] vmg = new int[WuAlphaColorQuantizer.TableLength];
 
         /// <summary>
         /// Moment of <c>b*P(c)</c>.
         /// </summary>
-        private readonly long[] vmb = new long[WuAlphaColorQuantizer.TableLength];
+        private readonly int[] vmb = new int[WuAlphaColorQuantizer.TableLength];
 
         /// <summary>
         /// Moment of <c>a*P(c)</c>.
         /// </summary>
-        private readonly long[] vma = new long[WuAlphaColorQuantizer.TableLength];
+        private readonly int[] vma = new int[WuAlphaColorQuantizer.TableLength];
 
         /// <summary>
         /// Moment of <c>c^2*P(c)</c>.
         /// </summary>
-        private readonly double[] m2 = new double[WuAlphaColorQuantizer.TableLength];
+        private readonly float[] m2 = new float[WuAlphaColorQuantizer.TableLength];
 
         /// <summary>
         /// Color space tag.
@@ -107,68 +107,68 @@ namespace JeremyAnsel.ColorQuant
         /// <summary>
         /// Temporary Array Data used in Get3DMoments()
         /// </summary>
-        private readonly long[] volume = new long[WuAlphaColorQuantizer.WorkArraySize];
+        private readonly int[] volume = new int[WuAlphaColorQuantizer.WorkArraySize];
 
         /// <summary>
         /// Temporary Array Data used in Get3DMoments()
         /// </summary>
-        private readonly long[] volumeR = new long[WuAlphaColorQuantizer.WorkArraySize];
+        private readonly int[] volumeR = new int[WuAlphaColorQuantizer.WorkArraySize];
 
         /// <summary>
         /// Temporary Array Data used in Get3DMoments()
         /// </summary>
-        private readonly long[] volumeG = new long[WuAlphaColorQuantizer.WorkArraySize];
+        private readonly int[] volumeG = new int[WuAlphaColorQuantizer.WorkArraySize];
 
         /// <summary>
         /// Temporary Array Data used in Get3DMoments()
         /// </summary>
-        private readonly long[] volumeB = new long[WuAlphaColorQuantizer.WorkArraySize];
+        private readonly int[] volumeB = new int[WuAlphaColorQuantizer.WorkArraySize];
 
         /// <summary>
         /// Temporary Array Data used in Get3DMoments()
         /// </summary>
-        private readonly long[] volumeA = new long[WuAlphaColorQuantizer.WorkArraySize];
+        private readonly int[] volumeA = new int[WuAlphaColorQuantizer.WorkArraySize];
 
         /// <summary>
         /// Temporary Array Data used in Get3DMoments()
         /// </summary>
-        private readonly double[] volume2 = new double[WuAlphaColorQuantizer.WorkArraySize];
+        private readonly float[] volume2 = new float[WuAlphaColorQuantizer.WorkArraySize];
 
         /// <summary>
         /// Temporary Array Data used in Get3DMoments()
         /// </summary>
-        private readonly long[] area = new long[WuAlphaColorQuantizer.IndexAlphaCount];
+        private readonly int[] area = new int[WuAlphaColorQuantizer.IndexAlphaCount];
 
         /// <summary>
         /// Temporary Array Data used in Get3DMoments()
         /// </summary>
-        private readonly long[] areaR = new long[WuAlphaColorQuantizer.IndexAlphaCount];
+        private readonly int[] areaR = new int[WuAlphaColorQuantizer.IndexAlphaCount];
 
         /// <summary>
         /// Temporary Array Data used in Get3DMoments()
         /// </summary>
-        private readonly long[] areaG = new long[WuAlphaColorQuantizer.IndexAlphaCount];
+        private readonly int[] areaG = new int[WuAlphaColorQuantizer.IndexAlphaCount];
 
         /// <summary>
         /// Temporary Array Data used in Get3DMoments()
         /// </summary>
-        private readonly long[] areaB = new long[WuAlphaColorQuantizer.IndexAlphaCount];
+        private readonly int[] areaB = new int[WuAlphaColorQuantizer.IndexAlphaCount];
 
         /// <summary>
         /// Temporary Array Data used in Get3DMoments()
         /// </summary>
-        private readonly long[] areaA = new long[WuAlphaColorQuantizer.IndexAlphaCount];
+        private readonly int[] areaA = new int[WuAlphaColorQuantizer.IndexAlphaCount];
 
         /// <summary>
         /// Temporary Array Data used in Get3DMoments()
         /// </summary>
-        private readonly double[] area2 = new double[WuAlphaColorQuantizer.IndexAlphaCount];
+        private readonly float[] area2 = new float[WuAlphaColorQuantizer.IndexAlphaCount];
         #endregion
 
         /// <summary>
         /// Temporary Data in BuildCube()
         /// </summary>
-        private readonly double[] vv = new double[WuAlphaColorQuantizer.MaxColors];
+        private readonly float[] vv = new float[WuAlphaColorQuantizer.MaxColors];
 
         /// <summary>
         /// Temporary Data
@@ -382,9 +382,9 @@ namespace JeremyAnsel.ColorQuant
         /// <param name="moment">The moment.</param>
         /// <returns>The result.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static double Volume(ref Box cube, long[] moment)
+        private static float Volume(ref Box cube, int[] moment)
         {
-            return (double)(moment[WuAlphaColorQuantizer.GetIndex(cube.R1, cube.G1, cube.B1, cube.A1)]
+            return (float)(moment[WuAlphaColorQuantizer.GetIndex(cube.R1, cube.G1, cube.B1, cube.A1)]
                 - moment[WuAlphaColorQuantizer.GetIndex(cube.R1, cube.G1, cube.B1, cube.A0)]
                 - moment[WuAlphaColorQuantizer.GetIndex(cube.R1, cube.G1, cube.B0, cube.A1)]
                 + moment[WuAlphaColorQuantizer.GetIndex(cube.R1, cube.G1, cube.B0, cube.A0)]
@@ -410,7 +410,7 @@ namespace JeremyAnsel.ColorQuant
         /// <param name="moment">The moment.</param>
         /// <returns>The result.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static long Bottom(ref Box cube, int direction, long[] moment)
+        private static int Bottom(ref Box cube, int direction, int[] moment)
         {
             switch (direction)
             {
@@ -472,7 +472,7 @@ namespace JeremyAnsel.ColorQuant
         /// <param name="moment">The moment.</param>
         /// <returns>The result.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static long Top(ref Box cube, int direction, int position, long[] moment)
+        private static int Top(ref Box cube, int direction, int position, int[] moment)
         {
             switch (direction)
             {
@@ -581,15 +581,15 @@ namespace JeremyAnsel.ColorQuant
             for (int i = 0; i < pixels; i++)
             {
                 uint pix = image[i];
-                uint a = (pix & 0xFF000000) >> 24;
-                uint r = (pix & 0x00FF0000) >> 16;
-                uint g = (pix & 0x0000FF00) >> 8;
-                uint b = pix & 0x000000FF;
+                int a = (int)((pix & 0xFF000000) >> 24);
+                int r = (int)((pix & 0x00FF0000) >> 16);
+                int g = (int)((pix & 0x0000FF00) >> 8);
+                int b = (int)(pix & 0x000000FF);
 
-                uint inr = r >> (8 - WuAlphaColorQuantizer.IndexBits);
-                uint ing = g >> (8 - WuAlphaColorQuantizer.IndexBits);
-                uint inb = b >> (8 - WuAlphaColorQuantizer.IndexBits);
-                uint ina = a >> (8 - WuAlphaColorQuantizer.IndexAlphaBits);
+                int inr = r >> (8 - WuAlphaColorQuantizer.IndexBits);
+                int ing = g >> (8 - WuAlphaColorQuantizer.IndexBits);
+                int inb = b >> (8 - WuAlphaColorQuantizer.IndexBits);
+                int ina = a >> (8 - WuAlphaColorQuantizer.IndexAlphaBits);
 
                 int ind = WuAlphaColorQuantizer.GetIndex((int)inr + 1, (int)ing + 1, (int)inb + 1, (int)ina + 1);
 
@@ -628,12 +628,12 @@ namespace JeremyAnsel.ColorQuant
 
                     for (int b = 1; b < WuAlphaColorQuantizer.IndexCount; b++)
                     {
-                        long line = 0;
-                        long lineR = 0;
-                        long lineG = 0;
-                        long lineB = 0;
-                        long lineA = 0;
-                        double line2 = 0;
+                        int line = 0;
+                        int lineR = 0;
+                        int lineG = 0;
+                        int lineB = 0;
+                        int lineA = 0;
+                        float line2 = 0;
 
                         for (int a = 1; a < WuAlphaColorQuantizer.IndexAlphaCount; a++)
                         {
@@ -681,14 +681,14 @@ namespace JeremyAnsel.ColorQuant
         /// </summary>
         /// <param name="c">The cube.</param>
         /// <returns>The result.</returns>
-        private double Variance(ref Box c)
+        private float Variance(ref Box c)
         {
-            double dr = WuAlphaColorQuantizer.Volume(ref c, this.vmr);
-            double dg = WuAlphaColorQuantizer.Volume(ref c, this.vmg);
-            double db = WuAlphaColorQuantizer.Volume(ref c, this.vmb);
-            double da = WuAlphaColorQuantizer.Volume(ref c, this.vma);
+            float dr = WuAlphaColorQuantizer.Volume(ref c, this.vmr);
+            float dg = WuAlphaColorQuantizer.Volume(ref c, this.vmg);
+            float db = WuAlphaColorQuantizer.Volume(ref c, this.vmb);
+            float da = WuAlphaColorQuantizer.Volume(ref c, this.vma);
 
-            double xx =
+            float xx =
                 this.m2[WuAlphaColorQuantizer.GetIndex(c.R1, c.G1, c.B1, c.A1)]
                 - this.m2[WuAlphaColorQuantizer.GetIndex(c.R1, c.G1, c.B1, c.A0)]
                 - this.m2[WuAlphaColorQuantizer.GetIndex(c.R1, c.G1, c.B0, c.A1)]
@@ -727,31 +727,31 @@ namespace JeremyAnsel.ColorQuant
         /// <param name="wholeA">The whole alpha.</param>
         /// <param name="wholeW">The whole weight.</param>
         /// <returns>The result.</returns>
-        private double Maximize(ref Box c, int direction, int first, int last, out int cut, double wholeR, double wholeG, double wholeB, double wholeA, double wholeW)
+        private float Maximize(ref Box c, int direction, int first, int last, out int cut, float wholeR, float wholeG, float wholeB, float wholeA, float wholeW)
         {
-            long baseR = Bottom(ref c, direction, this.vmr);
-            long baseG = WuAlphaColorQuantizer.Bottom(ref c, direction, this.vmg);
-            long baseB = WuAlphaColorQuantizer.Bottom(ref c, direction, this.vmb);
-            long baseA = WuAlphaColorQuantizer.Bottom(ref c, direction, this.vma);
-            long baseW = WuAlphaColorQuantizer.Bottom(ref c, direction, this.vwt);
+            int baseR = Bottom(ref c, direction, this.vmr);
+            int baseG = WuAlphaColorQuantizer.Bottom(ref c, direction, this.vmg);
+            int baseB = WuAlphaColorQuantizer.Bottom(ref c, direction, this.vmb);
+            int baseA = WuAlphaColorQuantizer.Bottom(ref c, direction, this.vma);
+            int baseW = WuAlphaColorQuantizer.Bottom(ref c, direction, this.vwt);
 
-            double max = 0.0;
+            float max = 0.0f;
             cut = -1;
 
             for (int i = first; i < last; i++)
             {
-                double halfR = baseR + WuAlphaColorQuantizer.Top(ref c, direction, i, this.vmr);
-                double halfG = baseG + WuAlphaColorQuantizer.Top(ref c, direction, i, this.vmg);
-                double halfB = baseB + WuAlphaColorQuantizer.Top(ref c, direction, i, this.vmb);
-                double halfA = baseA + WuAlphaColorQuantizer.Top(ref c, direction, i, this.vma);
-                double halfW = baseW + WuAlphaColorQuantizer.Top(ref c, direction, i, this.vwt);
+                float halfR = baseR + WuAlphaColorQuantizer.Top(ref c, direction, i, this.vmr);
+                float halfG = baseG + WuAlphaColorQuantizer.Top(ref c, direction, i, this.vmg);
+                float halfB = baseB + WuAlphaColorQuantizer.Top(ref c, direction, i, this.vmb);
+                float halfA = baseA + WuAlphaColorQuantizer.Top(ref c, direction, i, this.vma);
+                float halfW = baseW + WuAlphaColorQuantizer.Top(ref c, direction, i, this.vwt);
 
                 if (halfW == 0)
                 {
                     continue;
                 }
 
-                double temp = ((halfR * halfR) + (halfG * halfG) + (halfB * halfB) + (halfA * halfA)) / halfW;
+                float temp = ((halfR * halfR) + (halfG * halfG) + (halfB * halfB) + (halfA * halfA)) / halfW;
 
                 halfR = wholeR - halfR;
                 halfG = wholeG - halfG;
@@ -784,21 +784,21 @@ namespace JeremyAnsel.ColorQuant
         /// <returns>Returns a value indicating whether the box has been split.</returns>
         private bool Cut(ref Box set1, ref Box set2)
         {
-            double wholeR = WuAlphaColorQuantizer.Volume(ref set1, this.vmr);
-            double wholeG = WuAlphaColorQuantizer.Volume(ref set1, this.vmg);
-            double wholeB = WuAlphaColorQuantizer.Volume(ref set1, this.vmb);
-            double wholeA = WuAlphaColorQuantizer.Volume(ref set1, this.vma);
-            double wholeW = WuAlphaColorQuantizer.Volume(ref set1, this.vwt);
+            float wholeR = WuAlphaColorQuantizer.Volume(ref set1, this.vmr);
+            float wholeG = WuAlphaColorQuantizer.Volume(ref set1, this.vmg);
+            float wholeB = WuAlphaColorQuantizer.Volume(ref set1, this.vmb);
+            float wholeA = WuAlphaColorQuantizer.Volume(ref set1, this.vma);
+            float wholeW = WuAlphaColorQuantizer.Volume(ref set1, this.vwt);
 
             int cutr;
             int cutg;
             int cutb;
             int cuta;
 
-            double maxr = this.Maximize(ref set1, 3, set1.R0 + 1, set1.R1, out cutr, wholeR, wholeG, wholeB, wholeA, wholeW);
-            double maxg = this.Maximize(ref set1, 2, set1.G0 + 1, set1.G1, out cutg, wholeR, wholeG, wholeB, wholeA, wholeW);
-            double maxb = this.Maximize(ref set1, 1, set1.B0 + 1, set1.B1, out cutb, wholeR, wholeG, wholeB, wholeA, wholeW);
-            double maxa = this.Maximize(ref set1, 0, set1.A0 + 1, set1.A1, out cuta, wholeR, wholeG, wholeB, wholeA, wholeW);
+            float maxr = this.Maximize(ref set1, 3, set1.R0 + 1, set1.R1, out cutr, wholeR, wholeG, wholeB, wholeA, wholeW);
+            float maxg = this.Maximize(ref set1, 2, set1.G0 + 1, set1.G1, out cutg, wholeR, wholeG, wholeB, wholeA, wholeW);
+            float maxb = this.Maximize(ref set1, 1, set1.B0 + 1, set1.B1, out cutb, wholeR, wholeG, wholeB, wholeA, wholeW);
+            float maxa = this.Maximize(ref set1, 0, set1.A0 + 1, set1.A1, out cuta, wholeR, wholeG, wholeB, wholeA, wholeW);
 
             int dir;
 
@@ -916,18 +916,18 @@ namespace JeremyAnsel.ColorQuant
             {
                 if (this.Cut(ref this.cube[next], ref this.cube[i]))
                 {
-                    this.vv[next] = this.cube[next].Volume > 1 ? this.Variance(ref this.cube[next]) : 0.0;
-                    this.vv[i] = this.cube[i].Volume > 1 ? this.Variance(ref this.cube[i]) : 0.0;
+                    this.vv[next] = this.cube[next].Volume > 1 ? this.Variance(ref this.cube[next]) : 0.0f;
+                    this.vv[i] = this.cube[i].Volume > 1 ? this.Variance(ref this.cube[i]) : 0.0f;
                 }
                 else
                 {
-                    this.vv[next] = 0.0;
+                    this.vv[next] = 0.0f;
                     i--;
                 }
 
                 next = 0;
 
-                double temp = this.vv[0];
+                float temp = this.vv[0];
                 for (int k = 1; k <= i; k++)
                 {
                     if (this.vv[k] > temp)
@@ -959,7 +959,7 @@ namespace JeremyAnsel.ColorQuant
             {
                 this.Mark(ref this.cube[k], (byte)k);
 
-                double weight = WuAlphaColorQuantizer.Volume(ref this.cube[k], this.vwt);
+                float weight = WuAlphaColorQuantizer.Volume(ref this.cube[k], this.vwt);
 
                 if (weight != 0)
                 {
@@ -1014,7 +1014,7 @@ namespace JeremyAnsel.ColorQuant
             {
                 this.Mark(ref this.cube[k], (byte)k);
 
-                double weight = WuAlphaColorQuantizer.Volume(ref this.cube[k], this.vwt);
+                float weight = WuAlphaColorQuantizer.Volume(ref this.cube[k], this.vwt);
 
                 if (weight != 0)
                 {
