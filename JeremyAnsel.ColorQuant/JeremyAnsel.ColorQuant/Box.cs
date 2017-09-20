@@ -10,7 +10,7 @@ namespace JeremyAnsel.ColorQuant
     /// <summary>
     /// A box color cube.
     /// </summary>
-    internal sealed class Box
+    internal struct Box
     {
         /// <summary>
         /// Gets or sets the min red value, exclusive.
